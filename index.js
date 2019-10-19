@@ -2,7 +2,8 @@ var camera;
 var canvas;
 var ctx;
 var model;
-var noMoreUpdate = false;
+var target = null;
+var prevTarget = null;
 
 window.onload = async function() {
   model = await cocoSsd.load();
@@ -34,30 +35,61 @@ async function cameraStart() {
   camera.onloadedmetadata = () => {
     updateFrame();
   };
+
+  // チャートは常に表示
+  drawChart();
 }
 
 async function updateFrame() {
-  if (noMoreUpdate) return;
-
   var predictions = await model.detect(camera);
   console.log(predictions);
 
-  // canvas の内容をクリア
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+  target = null;
   for (var i = 0; i < predictions.length; i++) {
-    var obj = predictions[i];
-    var box = obj.bbox;
-    drawRect(box[0], box[1], box[2], box[3]);
-    drawLabel(
-      obj["class"] + " : " + parseInt(obj["score"] * 100, 10) + "%",
-      box[0],
-      box[1]
+    if (predictions[i].class == "bottle") {
+      target = predictions[i];
+      break;
+    }
+  }
+
+  // 前フレーム検知なし、今回検知あり（初めて検知）-> ターゲット表示、情報表示
+  // 前フレーム検知なし、今回検知なし -> 何もしない
+  // 前フレーム検知あり、今回検知あり -> ターゲット削除の上表示、情報は再描画しない
+  // 前フレーム検知あり、今回検知なし -> ターゲット削除
+  if (prevTarget) {
+    clearCanvas();
+  }
+  if (target) {
+    var x = target.bbox[0];
+    var y = target.bbox[1];
+    var w = target.bbox[2];
+    var h = target.bbox[3];
+
+    var centerX = x + w / 2;
+    var centerY = y - h / 2;
+
+    var targetImage = new Image();
+    targetImage.src = "./images/target.png";
+    ctx.drawImage(
+      targetImage,
+      0,
+      0,
+      targetImage.width,
+      targetImage.height,
+      centerX - targetImage.width / 2,
+      centerY + targetImage.height / 2,
+      targetImage.width,
+      targetImage.height
     );
   }
 
-  drawChart();
+  prevTarget = target;
   requestAnimationFrame(updateFrame);
+}
+
+function clearCanvas() {
+  // canvas の内容をクリア
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
 /**
@@ -65,7 +97,7 @@ async function updateFrame() {
  */
 async function callApi(imageString) {
   var url = "https://vision.googleapis.com/v1/images:annotate";
-  var apiKey = "AIzaSyBePpoAr3J_W-FdbZGMgYRhDopY4Emlf7w";
+  var apiKey = "";
   var apiUrl = url + "?key=" + apiKey;
 
   var body = {
@@ -135,6 +167,44 @@ function drawChart() {
         }
       ]
     },
-    options: {}
+    options: {
+      title: {
+        display: false
+      },
+      scales: {
+        xAxes: [
+          {
+            type: "realtime",
+            realtime: {
+              delay: 2000,
+              onRefresh: function(chart) {
+                chart.data.datasets.forEach(function(dataset) {
+                  dataset.data.push({
+                    x: Math.random(),
+                    y: Math.random()
+                  });
+                });
+              }
+            }
+          }
+        ]
+      },
+      plugins: {
+        streaming: {
+          duration: 20000,
+          refresh: 1000,
+          delay: 1000,
+          frameRate: 30,
+          pause: false,
+
+          onRefresh: function(chart) {
+            chart.data.datasets[0].data.push({
+              x: Date.now(),
+              y: Math.random() * 100
+            });
+          }
+        }
+      }
+    }
   });
 }

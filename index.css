@@ -1,5 +1,7 @@
 video,
-canvas {
+canvas,
+div#cover,
+div#design {
   position: absolute;
   top: 0;
   left: 0;
@@ -12,4 +14,15 @@ canvas#chart {
   width: 40% !important;
   height: 40% !important;
   padding: 30px;
+}
+
+div#cover {
+  background-color: #011826;
+  opacity: 0.5;
+}
+
+div#design {
+  background-image: url("./images/sideline.png");
+  background-repeat: no-repeat;
+  background-position: 10px 20px;
 }

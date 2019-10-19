@@ -1,10 +1,15 @@
 var camera;
 var canvas;
 var ctx;
-
+var model;
 var noMoreUpdate = false;
 
 window.onload = async function() {
+  model = await cocoSsd.load();
+  cameraStart();
+};
+
+async function cameraStart() {
   camera = document.getElementById("camera");
   canvas = document.getElementById("canvas");
   ctx = canvas.getContext("2d");
@@ -26,13 +31,14 @@ window.onload = async function() {
 
   canvas.width = camera.clientWidth;
   canvas.height = camera.clientHeight;
-  updateFrame();
-};
+  camera.onloadedmetadata = () => {
+    updateFrame();
+  };
+}
 
 async function updateFrame() {
   if (noMoreUpdate) return;
 
-  var model = await cocoSsd.load();
   var predictions = await model.detect(camera);
   console.log(predictions);
 

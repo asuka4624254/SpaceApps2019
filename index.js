@@ -5,6 +5,12 @@ var model;
 var target = null;
 var prevTarget = null;
 
+var chartPointer = 0;
+var chartStack = [];
+
+// var donutWave =
+// var bottleWave = ;
+
 window.onload = async function() {
   model = await cocoSsd.load();
   cameraStart();
@@ -14,6 +20,8 @@ async function cameraStart() {
   camera = document.getElementById("camera");
   canvas = document.getElementById("canvas");
   ctx = canvas.getContext("2d");
+
+  addChartStack(donutWave);
 
   var constraints = {
     audio: false,
@@ -46,7 +54,7 @@ async function updateFrame() {
 
   target = null;
   for (var i = 0; i < predictions.length; i++) {
-    if (predictions[i].class == "bottle") {
+    if (predictions[i].class == "donut" || predictions[i].class == "bottle") {
       target = predictions[i];
       break;
     }
@@ -60,6 +68,7 @@ async function updateFrame() {
     clearCanvas();
   }
   if (target) {
+    playSound(target.class);
     var x = target.bbox[0];
     var y = target.bbox[1];
     var w = target.bbox[2];
@@ -96,32 +105,27 @@ function clearCanvas() {
  * GoogleのOCR APIを叩く
  */
 async function callApi(imageString) {
-  var url = "https://vision.googleapis.com/v1/images:annotate";
-  var apiKey = "";
-  var apiUrl = url + "?key=" + apiKey;
-
+  var url = "http://172.30.2.31:8080";
   var body = {
     requests: [
       {
         image: {
           content: imageString
-        },
-        features: {
-          type: "TEXT_DETECTION"
         }
       }
     ]
   };
 
   try {
-    var res = await fetch(apiUrl, {
-      method: "POST",
-      body: JSON.stringify(body)
+    var res = await fetch(url, {
+      method: "POST"
+      //   body: JSON.stringify(body)
     });
     if (!res.ok) {
       throw new Error();
     }
   } catch (e) {
+    console.log(e);
     console.log("Oops! Some error occurred. " + JSON.stringify(e));
     return;
   }
@@ -159,14 +163,16 @@ function drawChart() {
   var chart = new Chart(ctx, {
     type: "line",
     data: {
-      labels: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+      labels: ["Space Apps Challenge 2019"],
       datasets: [
         {
-          borderColor: "rgb(255, 99, 132)",
-          data: [0, 10, 5, 2, 20, 30, 45, 0, 10, 5, 2, 20, 30, 45]
+          label: "Don't think, touch!",
+          borderColor: "rgb(4, 191, 191)",
+          data: []
         }
       ]
     },
+
     options: {
       title: {
         display: false
@@ -176,35 +182,36 @@ function drawChart() {
           {
             type: "realtime",
             realtime: {
-              delay: 2000,
               onRefresh: function(chart) {
                 chart.data.datasets.forEach(function(dataset) {
-                  dataset.data.push({
-                    x: Math.random(),
-                    y: Math.random()
-                  });
+                  if (chartStack[chartPointer] == undefined) {
+                    dataset.data.push({
+                      x: Date.now(),
+                      y: 0
+                    });
+                  } else {
+                    dataset.data.push({
+                      x: Date.now(),
+                      y: chartStack[chartPointer]
+                    });
+                    chartPointer++;
+                  }
                 });
               }
             }
           }
         ]
-      },
-      plugins: {
-        streaming: {
-          duration: 20000,
-          refresh: 1000,
-          delay: 1000,
-          frameRate: 30,
-          pause: false,
-
-          onRefresh: function(chart) {
-            chart.data.datasets[0].data.push({
-              x: Date.now(),
-              y: Math.random() * 100
-            });
-          }
-        }
       }
     }
   });
+}
+
+function addChartStack(data) {
+  chartStack = data;
+  chartPointer = 0;
+}
+
+function playSound(name) {
+  audio = document.getElementById(name);
+  audio.play();
 }

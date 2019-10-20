@@ -12,8 +12,9 @@ div#design {
 
 canvas#chart {
   width: 40% !important;
-  height: 40% !important;
-  padding: 30px;
+  height: 50% !important;
+  margin: -15px 0;
+  padding: 40px;
 }
 
 div#cover {
@@ -24,5 +25,5 @@ div#cover {
 div#design {
   background-image: url("./images/sideline.png");
   background-repeat: no-repeat;
-  background-position: 10px 20px;
+  background-position: 15px 20px;
 }

@@ -313,6 +313,13 @@ var bottleWave = [
   0.0
 ];
 
+var donutText = `Lunar sample 10003 is a low-K, high-Ti basalt (figure1).<br />
+It is about 3.9 b.y. old, with a cosmic ray exposureage of 137 m.y. Its location on the lunar surface wasnot recorded.<br />
+It was returned in ALSRC #1004, andwas one of the first lunar samples studied.`;
+var bottoleText = `Ayataka is an authentic, premium tea that delivers a cloudy hue and a well-rounded flavor that lingers on the tongue, just as Japanese green tea brewed in a pot should.<br />
+The name is derived from the name of the high-quality green tea first sold in the Meiji Era by Kanbayashi Shunsho Honten, a long-standing tea merchant with a history of over 450 years, that supplied tea leaves to the shogunate family from Uji, Kyoto.<br /><br />
+The character "taka" ("hawk" in Japanese) has long been used to symbolize precious tea leaves, and the character "aya" ("weaving" in Japanese) expresses how the precious and high-quality tea leaves are "woven" into the Ayataka brand, embodying the dedication to flavor in producing this premium tea.`;
+
 window.onload = async function() {
   model = await cocoSsd.load();
   cameraStart();
@@ -368,10 +375,15 @@ async function updateFrame() {
     clearCanvas();
   }
   if (target) {
-    // チャートにデータをセット
-    target.class == "donut"
-      ? addChartStack(donutWave)
-      : addChartStack(bottleWave);
+    // データをセット
+    if (target.class == "donut") {
+      addChartStack(donutWave);
+      drawInfoPanel(donutText);
+    } else {
+      addChartStack(bottleWave);
+      drawInfoPanel(bottoleText);
+    }
+
     // サウンド鳴らす
     playSound(target.class);
 
@@ -497,4 +509,10 @@ function addChartStack(data) {
 function playSound(name) {
   audio = document.getElementById(name);
   audio.play();
+}
+
+function drawInfoPanel(text) {
+  var info = document.getElementById("info");
+  info.innerHTML = text;
+  info.style.display = "block";
 }
